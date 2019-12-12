@@ -13,12 +13,18 @@ namespace HtmlMinify
     {
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
-            filterContext.HttpContext.Items["outputWriter"] = filterContext.RequestContext.HttpContext.Response.Output;
-            filterContext.RequestContext.HttpContext.Response.Output = new HtmlTextWriter(new StringWriter());
+            if (filterContext.RequestContext.HttpContext.Response.Output is HttpWriter)
+            {
+                filterContext.HttpContext.Items["outputWriter"] = filterContext.RequestContext.HttpContext.Response.Output;
+                filterContext.RequestContext.HttpContext.Response.Output = new HtmlTextWriter(new StringWriter());
+            }
         }
 
         public override void OnResultExecuted(ResultExecutedContext filterContext)
         {
+            if (!filterContext.HttpContext.Items.Contains("outputWriter") || !(filterContext.RequestContext.HttpContext.Response.Output is HtmlTextWriter))
+                return;
+
             HtmlTextWriter writer = (HtmlTextWriter)filterContext.RequestContext.HttpContext.Response.Output;
             string response = writer.InnerWriter.ToString();
 
